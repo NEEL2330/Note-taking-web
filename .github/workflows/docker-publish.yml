@@ -36,12 +36,32 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/my-app:${{ github.sha }}
       
-      # Step 5: Trigger the second repository to update its K8s manifest
-      - name: Notify Second Repository
-        uses: peter-evans/repository-dispatch@v3
+      # Step 5: Clone your K8s Manifest Repository onto the same runner
+      - name: Checkout Kubernetes Repository
+        uses: actions/checkout@v4
         with:
-          token: ${{ secrets.CROSS_REPO_PAT }}
+          # Your target Kubernetes repo path
           repository: NEEL2330/Kubernetes
-          event-type: update-k8s-manifest
-          # Sending the clean registry path and the unique commit SHA tag
-          client-payload: '{"image_name": "${{ secrets.DOCKERHUB_USERNAME }}/my-app", "tag": "${{ github.sha }}"}'
+          # The Personal Access Token giving write access to that repo
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          # Downloads the K8s code into a separate subfolder named 'k8s-repo'
+          path: k8s-repo
+
+      # Step 6: Modify the deployment file directly inside the cloned subfolder
+      - name: Update Image Tag in Kubernetes Manifest
+        run: |
+          NEW_IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/my-app:${{ github.sha }}"
+          echo "Updating deployment with image: $NEW_IMAGE"
+          
+          # Use sed to directly target and swap out your placeholder string
+          sed -i "s|PLACEHOLDER_IMAGE_TAG|$NEW_IMAGE|g" k8s-repo/deployment.yaml
+
+      # Step 7: Push the updated file back to the Kubernetes repository
+      - name: Commit and Push to Kubernetes Repo
+        run: |
+          cd k8s-repo
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add deployment.yaml
+          git commit -m "chore: automated deployment image update to tag ${{ github.sha }}"
+          git push origin main
