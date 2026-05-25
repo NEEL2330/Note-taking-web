@@ -41,7 +41,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.CROSS_REPO_PAT }}
-          repository: NEEL@2330/Kubernetes
+          repository: NEEL2330/Kubernetes
           event-type: update-k8s-manifest
           # Sending the clean registry path and the unique commit SHA tag
           client-payload: '{"image_name": "${{ secrets.DOCKERHUB_USERNAME }}/my-app", "tag": "${{ github.sha }}"}'
