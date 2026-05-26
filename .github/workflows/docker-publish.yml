@@ -54,7 +54,7 @@ jobs:
           echo "Updating deployment with image: $NEW_IMAGE"
           
           # Use sed to directly target and swap out your placeholder string
-          sed -i "s|PLACEHOLDER_IMAGE_TAG|$NEW_IMAGE|g" k8s-repo/deployment.yaml
+          sed -i "s|image:.*|image: $NEW_IMAGE|g" k8s-repo/deployment.yaml
 
       # Step 7: Push the updated file back to the Kubernetes repository
       - name: Commit and Push to Kubernetes Repo
